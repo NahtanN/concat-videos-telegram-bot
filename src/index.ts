@@ -11,68 +11,30 @@ const TOKEN = process.env.BOT_API_TOKEN
 const URL = process.env.API_URL
 
 const dir = 'public'
-const subDir = 'public/uploads'
+const subDir = 'public/uploads/'
 
-
-var listFilePath = dir + Date.now() + '-' + 'list.txt'
-var outputFilePath = dir + Date.now() + 'output.mp4'
+var listFilePath = subDir + Date.now() + '-' + 'list.txt'
+var outputFilePath = 'public/' + Date.now() + 'output.mp4'
 var countVideos = 1
-var list = ''
 
-const convertVideos = async () => {
-
-  const writerStream = fs.createWriteStream(listFilePath)
+const listFiles = () => {
+  let list = ''
 
   return new Promise((resolve, reject) => {
-
+    
     try {
 
-      setTimeout(() => {
+      fs.readdir(subDir, (err, files) => {
 
-        fs.readdir(subDir, (err, files) => {
-
-          files.forEach(file => {
+        files.forEach(file => {
   
-            let video = `${subDir}/${file}`
-            let convertedVideo = `converted-${file}`
-  
-            // 1920:1080
-            exec(`ffmpeg -i ${video} -vf scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1,setsar=1,fps=30,format=yuv420p -ar 48000 -ac 2 ${subDir}/${convertedVideo}`,
-              (err, stdout, stderr) => {
-  
-                if (err) {
-                  console.log(err)
-  
-                  fs.unlink(`${subDir}/${file}`, err => console.log(err))
-  
-                  throw err
-                }
-  
-                fs.unlinkSync(video)
-  
-                // ctx.reply('Video baixado e convertido!')
-  
-              }
-            )
-
-            list += `file ${convertedVideo}`
-            list += '\n'
-  
-          })
+          if (file.includes('converted-')) list += `file ${file}\n`
           
-          if (list === '') reject(1)
-
-          writerStream.write(list)
-
-          writerStream.end(() => {
-            
-            resolve(0)
-
-          })
-            
         })
+        
+        resolve(list)
 
-      }, 1000 * countVideos)
+      })
 
     } catch (err) {
 
@@ -82,7 +44,35 @@ const convertVideos = async () => {
 
   })
 
+}
 
+const getVideos = () => {
+  
+  
+  return new Promise(async (resolve, reject) => {
+
+    let files = await listFiles()
+      .catch(() => console.log('Error na contagem de arquivos!'))
+    
+    if (files === '') return reject(1)
+
+    let writerStream = fs.createWriteStream(listFilePath)
+
+      writerStream.write(files)
+    
+      writerStream.end(() => {
+  
+        return resolve(0)
+  
+      })
+  
+      writerStream.on('error', () => {
+        
+        return reject(1)
+  
+      })
+
+  })
 
 }
 
@@ -113,11 +103,11 @@ bot.on('video', async ctx => {
   const filePath = fileId.file_path
 
   await downloadVideo(`${URL}${TOKEN}/${filePath}`, file_name)
-    .then(res => {
-
-      ctx.reply(`${countVideos}° video baixado com sucesso!`)
+    .then(() => {
+      // console.log(res)
+      ctx.reply(`${countVideos}° video baixado e convertido com sucesso!`)
       
-      countVideos += 1
+      countVideos += 1      
 
     })
     .catch(err => ctx.reply(`Erro no download do ${countVideos}° video!`))
@@ -127,50 +117,70 @@ bot.on('video', async ctx => {
 // Merger videos
 bot.command('merge', async ctx => {
 
-  await ctx.reply('Iniciando conversão!')
+  await ctx.reply('Lendo arquivos!')
 
-  await convertVideos()
+  await getVideos()
     .then(async () => {
 
     await ctx.reply('Iniciando merge!')
 
       try {
 
-        setTimeout(() => {
+        exec(`ffmpeg -f concat -safe 0 -i ${listFilePath} -c copy ${outputFilePath}`, async (err, stdout, stderr) => {
 
-          exec(`ffmpeg -f concat -safe 0 -i ${listFilePath} -c copy ${outputFilePath}`, async (err, stdout, stderr) => {
+          if (err) {
 
-            if (err) {
-  
-              ctx.reply('Erro no merge!')
-  
-              fs.unlinkSync(listFilePath)
-  
-              throw err
-  
-            }
-  
-            await ctx.reply('Merge com sucesso!')
-            await ctx.reply('Enviando video. Aguarde...')
-  
-            maneger.sendVideo(ctx.update.message.chat.id, {
-              source: Path.resolve(__dirname, '..', `${outputFilePath}`)
-            })
-              .then(() => {
-  
-                ctx.reply('Finalizado!')
-  
-                fs.unlinkSync(listFilePath)
-                fs.unlinkSync(outputFilePath)
-  
-                list = ''
-  
-              })
-              .catch(err => ctx.reply('Erro no envio!'))
-  
+            ctx.reply('Erro no merge!')
+
+            fs.unlinkSync(listFilePath)
+
+            // fs.readdir(subDir, (err, files) => {
+
+            //   if (err) throw err
+          
+            //   files.forEach(file => {
+          
+            //     fs.unlink(Path.join(subDir, file), err => {
+          
+            //       if (err) {
+          
+            //         ctx.reply('Erro na deleção dos videos!')
+          
+            //         throw err
+          
+            //       }
+          
+            //     })
+          
+            //   })
+          
+            // })
+
+            throw err
+
+          }
+
+          await ctx.reply('Merge com sucesso!')
+          await ctx.reply('Enviando video. Aguarde...')
+
+          maneger.sendVideo(ctx.update.message.chat.id, {
+            source: Path.resolve(__dirname, '..', `${outputFilePath}`)
+          }, {
+            caption: 'Finalizado!'
           })
+            .then(() => {
 
-        }, 1000 * countVideos)
+              // ctx.reply('Finalizado!')
+
+              fs.unlinkSync(listFilePath)
+              fs.unlinkSync(outputFilePath)
+
+              // list = ''
+
+            })
+            .catch(err => ctx.reply('Erro no envio!'))
+
+        })
 
       } catch (err) {
 
@@ -180,12 +190,15 @@ bot.command('merge', async ctx => {
       }
 
     })
-    .catch(err => console.log(err))
+    .catch(err => ctx.reply('Lista vazia!'))
 
 })
 
 // Apaga todos os videos
 bot.command('clear', ctx => {
+
+  // list = ''
+  countVideos = 1
 
   fs.readdir(subDir, (err, files) => {
 
@@ -212,6 +225,8 @@ bot.command('clear', ctx => {
 })
 
 bot.command('teste', ctx => {
+  // console.log(list)
+
   fs.readdir(subDir, (error, files) => {
 
     files.forEach(file => console.log(file))
