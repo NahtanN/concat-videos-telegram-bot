@@ -32,7 +32,7 @@ if (!fs.existsSync(dir)) {
 // const bot = new Telegraf(TOKEN)
 const manager = new Telegram(TOKEN)
 
-const bot = new Composer
+const bot = new Composer()
 
 bot.start(ctx => ctx.reply('Pronto para uso!'))
 
@@ -166,5 +166,4 @@ bot.catch((err, ctx) => {
 })
 
 // bot.launch()
-export { bot }
-export default bot
+module.exports = bot
