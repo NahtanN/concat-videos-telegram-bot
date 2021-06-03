@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import confg, { config } from 'dotenv'
 import { Telegraf, Telegram } from 'telegraf'
 import { Composer } from 'micro-bot'
 import fs from 'fs'
@@ -6,6 +6,8 @@ import { exec } from 'child_process'
 import Path from 'path'
 import getVideosFiles from './utils/getVideoFiles'
 import downloadVideo from './download'
+
+config()
 
 const TOKEN = process.env.BOT_API_TOKEN
 const URL = process.env.API_URL
