@@ -1,80 +1,22 @@
 import { config } from 'dotenv'
 import { Telegraf, Telegram } from 'telegraf'
-import downloadVideo from './download'
 import fs from 'fs'
 import { exec } from 'child_process'
 import Path from 'path'
+import getVideosFiles from './utils/getVideoFiles'
+import downloadVideo from './download'
 
 config()
 
 const TOKEN = process.env.BOT_API_TOKEN
 const URL = process.env.API_URL
 
-const dir = 'public'
+const dir = 'public/'
 const subDir = 'public/uploads/'
 
 var listFilePath = subDir + Date.now() + '-' + 'list.txt'
-var outputFilePath = 'public/' + Date.now() + 'output.mp4'
+var outputFilePath = dir + Date.now() + '-' + 'output.mp4'
 var countVideos = 1
-
-const listFiles = () => {
-  let list = ''
-
-  return new Promise((resolve, reject) => {
-    
-    try {
-
-      fs.readdir(subDir, (err, files) => {
-
-        files.forEach(file => {
-  
-          if (file.includes('converted-')) list += `file ${file}\n`
-          
-        })
-        
-        resolve(list)
-
-      })
-
-    } catch (err) {
-
-      reject(1)
-
-    }
-
-  })
-
-}
-
-const getVideos = () => {
-  
-  
-  return new Promise(async (resolve, reject) => {
-
-    let files = await listFiles()
-      .catch(() => console.log('Error na contagem de arquivos!'))
-    
-    if (files === '') return reject(1)
-
-    let writerStream = fs.createWriteStream(listFilePath)
-
-      writerStream.write(files)
-    
-      writerStream.end(() => {
-  
-        return resolve(0)
-  
-      })
-  
-      writerStream.on('error', () => {
-        
-        return reject(1)
-  
-      })
-
-  })
-
-}
 
 // Cria o diretório de uploads caso não exista
 if (!fs.existsSync(dir)) {
@@ -94,67 +36,54 @@ bot.start(ctx => ctx.reply('Pronto para uso!'))
 // Faz o download dos videos enviados no chat do bot
 bot.on('video', async ctx => {
 
+  // Pega o nome e tipo do arquivo
   const { mime_type, file_name } = ctx.update.message.video
 
-  if (mime_type !== 'video/mp4') ctx.reply('Formato inválido!')
+  // Caso o video não seja no formato 'mp4', retorne
+  if (mime_type !== 'video/mp4') return ctx.reply('Formato inválido!')
 
+  // Pega o 'id' do video salvo na API do Telegram
   const fileId = await maneger.getFile(ctx.update.message.video.file_id)
 
+  // Pega o endereço do video salvo na API do Telegram
   const filePath = fileId.file_path
 
+  // Faz o download do video
   await downloadVideo(`${URL}${TOKEN}/${filePath}`, file_name)
     .then(() => {
-      // console.log(res)
+
       ctx.reply(`${countVideos}° video baixado e convertido com sucesso!`)
-      
-      countVideos += 1      
+
+      countVideos += 1
 
     })
     .catch(err => ctx.reply(`Erro no download do ${countVideos}° video!`))
 
 })
 
-// Merger videos
+// Concatena os videos
 bot.command('merge', async ctx => {
 
   await ctx.reply('Lendo arquivos!')
 
-  await getVideos()
+  // Busca os videos que serão concatenados
+  await getVideosFiles(subDir, listFilePath)
     .then(async () => {
 
-    await ctx.reply('Iniciando merge!')
+      await ctx.reply('Iniciando merge!')
 
       try {
 
+        // Concatena todos os videos selecionados
         exec(`ffmpeg -f concat -safe 0 -i ${listFilePath} -c copy ${outputFilePath}`, async (err, stdout, stderr) => {
 
+          // Caso ocorra algum erro na concatenação, retorne o erro
           if (err) {
 
             ctx.reply('Erro no merge!')
 
+            // Apaga o arquivo com o nome dos videos selecionados
             fs.unlinkSync(listFilePath)
-
-            // fs.readdir(subDir, (err, files) => {
-
-            //   if (err) throw err
-          
-            //   files.forEach(file => {
-          
-            //     fs.unlink(Path.join(subDir, file), err => {
-          
-            //       if (err) {
-          
-            //         ctx.reply('Erro na deleção dos videos!')
-          
-            //         throw err
-          
-            //       }
-          
-            //     })
-          
-            //   })
-          
-            // })
 
             throw err
 
@@ -163,6 +92,7 @@ bot.command('merge', async ctx => {
           await ctx.reply('Merge com sucesso!')
           await ctx.reply('Enviando video. Aguarde...')
 
+          // Envia o video para o usuário
           maneger.sendVideo(ctx.update.message.chat.id, {
             source: Path.resolve(__dirname, '..', `${outputFilePath}`)
           }, {
@@ -170,12 +100,11 @@ bot.command('merge', async ctx => {
           })
             .then(() => {
 
-              // ctx.reply('Finalizado!')
-
+              // Apaga o arquivo com o nome dos videos selecionados
               fs.unlinkSync(listFilePath)
-              fs.unlinkSync(outputFilePath)
 
-              // list = ''
+              // Apaga o video compilado
+              fs.unlinkSync(outputFilePath)
 
             })
             .catch(err => ctx.reply('Erro no envio!'))
@@ -196,18 +125,21 @@ bot.command('merge', async ctx => {
 
 // Apaga todos os videos
 bot.command('clear', ctx => {
-
-  // list = ''
+  
   countVideos = 1
 
+  // Le todos os arquivos do diretório especifico
   fs.readdir(subDir, (err, files) => {
 
     if (err) throw err
 
+    // Le arquivo por arquivo
     files.forEach(file => {
 
+      // Apaga o arquivo
       fs.unlink(Path.join(subDir, file), err => {
 
+        // Caso de erro, retorne o erro
         if (err) {
 
           ctx.reply('Erro na deleção dos videos!')
@@ -219,17 +151,6 @@ bot.command('clear', ctx => {
       })
 
     })
-
-  })
-
-})
-
-bot.command('teste', ctx => {
-  // console.log(list)
-
-  fs.readdir(subDir, (error, files) => {
-
-    files.forEach(file => console.log(file))
 
   })
 
