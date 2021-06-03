@@ -1,12 +1,11 @@
-import { config } from 'dotenv'
+import 'dotenv/config'
 import { Telegraf, Telegram } from 'telegraf'
+import { Composer } from 'micro-bot'
 import fs from 'fs'
 import { exec } from 'child_process'
 import Path from 'path'
 import getVideosFiles from './utils/getVideoFiles'
 import downloadVideo from './download'
-
-config()
 
 const TOKEN = process.env.BOT_API_TOKEN
 const URL = process.env.API_URL
@@ -28,14 +27,16 @@ if (!fs.existsSync(dir)) {
 }
 
 // Cria uma instância do bot
-const bot = new Telegraf(TOKEN)
+// const bot = new Telegraf(TOKEN)
 const maneger = new Telegram(TOKEN)
+
+const bot = new Composer
 
 bot.start(ctx => ctx.reply('Pronto para uso!'))
 
 // Faz o download dos videos enviados no chat do bot
-bot.on('video', async ctx => {
-
+bot.on('video', async (ctx) => {
+  
   // Pega o nome e tipo do arquivo
   const { mime_type, file_name } = ctx.update.message.video
 
@@ -162,4 +163,6 @@ bot.catch((err, ctx) => {
 
 })
 
-bot.launch()
+// bot.launch()
+export { bot }
+export default bot
