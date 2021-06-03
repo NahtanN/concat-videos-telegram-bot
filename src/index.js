@@ -1,4 +1,4 @@
-import confg, { config } from 'dotenv'
+import { config } from 'dotenv'
 import { Telegraf, Telegram } from 'telegraf'
 import { Composer } from 'micro-bot'
 import fs from 'fs'
