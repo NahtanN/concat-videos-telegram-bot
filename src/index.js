@@ -1,11 +1,11 @@
-import { config } from 'dotenv'
-import { Telegraf, Telegram } from 'telegraf'
-import { Composer } from 'micro-bot'
-import fs from 'fs'
-import { exec } from 'child_process'
-import Path from 'path'
-import getVideosFiles from './utils/getVideoFiles'
-import downloadVideo from './download'
+const config = require('dotenv')
+const { Telegraf, Telegram } = require('telegraf')
+const { Composer } = require('micro-bot')
+const fs = require('fs')
+const { exec } = require('child_process')
+const Path = require('path')
+const getVideosFiles = require('./utils/getVideoFiles')
+const downloadVideo = require('./download')
 
 config()
 
