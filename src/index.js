@@ -28,7 +28,7 @@ if (!fs.existsSync(dir)) {
 
 // Cria uma instância do bot
 // const bot = new Telegraf(TOKEN)
-const maneger = new Telegram(TOKEN)
+const manager = new Telegram(TOKEN)
 
 const bot = new Composer
 
@@ -44,7 +44,7 @@ bot.on('video', async (ctx) => {
   if (mime_type !== 'video/mp4') return ctx.reply('Formato inválido!')
 
   // Pega o 'id' do video salvo na API do Telegram
-  const fileId = await maneger.getFile(ctx.update.message.video.file_id)
+  const fileId = await manager.getFile(ctx.update.message.video.file_id)
 
   // Pega o endereço do video salvo na API do Telegram
   const filePath = fileId.file_path
@@ -94,7 +94,7 @@ bot.command('merge', async ctx => {
           await ctx.reply('Enviando video. Aguarde...')
 
           // Envia o video para o usuário
-          maneger.sendVideo(ctx.update.message.chat.id, {
+          manager.sendVideo(ctx.update.message.chat.id, {
             source: Path.resolve(__dirname, '..', `${outputFilePath}`)
           }, {
             caption: 'Finalizado!'
