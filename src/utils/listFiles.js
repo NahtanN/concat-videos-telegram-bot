@@ -1,7 +1,6 @@
-import fs from 'fs'
+const fs = require('fs')
 
-
-const listFiles = (directory: string) => {
+const listFiles = (directory) => {
 
   let list = ''
 
@@ -37,4 +36,4 @@ const listFiles = (directory: string) => {
 }
 
 
-export default listFiles
+module.exports = listFiles

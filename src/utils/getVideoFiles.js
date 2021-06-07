@@ -1,7 +1,7 @@
-import fs from 'fs'
-import listFiles from './listFiles'
+const fs = require('fs') 
+const listFiles = require('./listFiles') 
 
-const getVideosFiles = (directory: string, listFilePath: string) => {
+const getVideosFiles = (directory, listFilePath) => {
 
   return new Promise(async (resolve, reject) => {
 
@@ -36,4 +36,4 @@ const getVideosFiles = (directory: string, listFilePath: string) => {
 
 }
 
-export default getVideosFiles
+module.exports =  getVideosFiles

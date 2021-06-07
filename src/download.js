@@ -1,9 +1,9 @@
-import fs from 'fs'
-import Path from 'path'
-import axios from 'axios'
-import { exec } from 'child_process'
+const fs = require('fs') 
+const Path = require('path') 
+const axios = require('axios') 
+const { exec } = require('child_process') 
 
-const downloadVideo = async (url: string, fileName: string | undefined) => {
+const downloadVideo = async (url, fileName) => {
 
   const name = `${Date.now()}-${fileName}`
 
@@ -77,4 +77,4 @@ const downloadVideo = async (url: string, fileName: string | undefined) => {
 
 }
 
-export default downloadVideo
+module.exports = downloadVideo

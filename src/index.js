@@ -1,4 +1,4 @@
-const config = require('dotenv')
+const config = require('dotenv').config()
 const { Telegraf, Telegram } = require('telegraf')
 const { Composer } = require('micro-bot')
 const fs = require('fs')
@@ -6,8 +6,6 @@ const { exec } = require('child_process')
 const Path = require('path')
 const getVideosFiles = require('./utils/getVideoFiles')
 const downloadVideo = require('./download')
-
-config()
 
 const TOKEN = process.env.BOT_API_TOKEN
 const URL = process.env.API_URL
@@ -32,7 +30,7 @@ if (!fs.existsSync(dir)) {
 // const bot = new Telegraf(TOKEN)
 const manager = new Telegram(TOKEN)
 
-const bot = new Composer()
+// const bot = new Composer()
 
 bot.start(ctx => ctx.reply('Pronto para uso!'))
 
@@ -157,11 +155,7 @@ bot.command('clear', ctx => {
 
   })
 
-})
-
-bot.catch((err, ctx) => {
-  ctx.reply('Ocorreu algum error!')
-  console.log(err)
+  ctx.reply('Todos os videos na linha de trabalho foram apagados!')
 
 })
 
