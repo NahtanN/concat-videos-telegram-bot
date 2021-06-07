@@ -7,7 +7,7 @@ const Path = require('path')
 const getVideosFiles = require('./utils/getVideoFiles')
 const downloadVideo = require('./download')
 
-const TOKEN = process.env.BOT_API_TOKEN
+const TOKEN = process.env.BOT_TOKEN || process.env.BOT_API_TOKEN
 const URL = process.env.API_URL
 
 const dir = 'public/'
