@@ -50,7 +50,7 @@ const downloadVideo = async (url, fileName) => {
             // Deleta o video não convertido
             fs.unlink(`public/uploads/${name}`, err => console.log(err))
 
-            throw err
+            return reject(1)
           }
 
           // Após a conversão, apague o video original
@@ -67,9 +67,7 @@ const downloadVideo = async (url, fileName) => {
     // Caso ocorra algum erro, rejeite a Promise
     writer.on('error', () => {
 
-      reject(1)
-
-      throw new Error('Erro no download!')
+      return reject(1)      
 
     })
 
